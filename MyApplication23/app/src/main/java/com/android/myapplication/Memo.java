@@ -8,20 +8,43 @@ public class Memo {
 
 
     @PrimaryKey(autoGenerate = true)
-    private int id = 0;
-    private String title = "";
-    private String content = "";
-    private String image = "";
-    private String date = "";
+    private int id;
+    private String title;
+    private String content ;
+    private String image="";
+    private String date;
     private boolean isChecked = false;
 
-    public Memo(int id, String title, String content, String image, String date, boolean isChecked) {
-        this.id = id;
+    public Memo(String title, String content, String image, String date, boolean isChecked) {
         this.title = title;
         this.content = content;
         this.image = image;
         this.date = date;
         this.isChecked = isChecked;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public void setChecked(boolean checked) {
+        isChecked = checked;
     }
 
     public int getId() {

@@ -16,16 +16,18 @@ public abstract class AppDatabase extends RoomDatabase {
     // Room DB 싱글톤
     private static AppDatabase INSTANCE;
 
-    private static final Object sLock = new Object();
-
     public static AppDatabase getInstance(Context context){
-        synchronized (sLock){
+
             if (INSTANCE==null){
+                synchronized (AppDatabase.class){
                 INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
                         AppDatabase.class,"memo.db")
                         .build();
+                }
             }
             return INSTANCE;
-        }
+    }
+    public static void destroyInstance(){
+        INSTANCE = null;
     }
 }

@@ -17,6 +17,9 @@ interface MemoDao {
     @Query("DELETE FROM memo WHERE id = :id")
     void deleteMemoById(Long id);
 
+//    @Query("UPDATE FROM memo WHERE id = :id")
+
+
     @Query("SELECT * FROM memo ORDER BY date DESC")
     LiveData<List<Memo>> getAllMemos();
 
