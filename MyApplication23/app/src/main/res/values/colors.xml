@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC5</color>
+
+
+    <color name="warm_grey">#a2a2a2</color>
+    <color name="grey_icon">#DBDBDB</color>
+    <color name="white">#e3e3e3</color>
+    <color name="white_two">#ffffff</color>
+    <color name="grey_line">#eeeeee</color>
+
+    <color name="navy_one">#252F4A</color>
+    <color name="navy_two">#313B54</color>
+    <color name="navy_three">#202A43</color>
+
+    <color name="green">#38B45B</color>
+    <color name="color_black">#121621</color>
+
+    <color name="alpha_white">#0Dffffff</color>
+    <color name="alpha_white_hint">#33ffffff</color>
+    <color name="alpha_navy_one">#88252F4A</color>
+    <color name="alpha_navy_two">#88313B54</color>
+    <color name="alpha_navy_three">#CC202A43</color>
+
+
+</resources>
