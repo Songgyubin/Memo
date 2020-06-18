@@ -3,19 +3,30 @@ package com.android.myapplication;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import java.io.Serializable;
+
 @Entity(tableName = "memo")
-public class Memo {
+public class Memo implements Serializable {
 
 
     @PrimaryKey(autoGenerate = true)
-    private int id;
+    private int id= 0;
     private String title;
     private String content ;
     private String image="";
     private String date;
     private boolean isChecked = false;
 
-    public Memo(String title, String content, String image, String date, boolean isChecked) {
+    /*public Memo(String title, String content, String image, String date, boolean isChecked) {
+        this.title = title;
+        this.content = content;
+        this.image = image;
+        this.date = date;
+        this.isChecked = isChecked;
+    }*/
+
+    public Memo(int id, String title, String content, String image, String date, boolean isChecked) {
+        this.id = id;
         this.title = title;
         this.content = content;
         this.image = image;

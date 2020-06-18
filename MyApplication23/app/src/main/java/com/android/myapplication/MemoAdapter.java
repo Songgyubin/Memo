@@ -16,10 +16,16 @@ import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
+
+// 메모리스트 어댑터
 public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
     private ArrayList<Memo> memos = new ArrayList<>();
 
-    private OnItemClickListener listener;
+    private OnItemClickListener mListener = null;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.mListener = listener;
+    }
 
     MemoAdapter(ArrayList<Memo> memos) {
         this.memos = memos;
@@ -62,7 +68,6 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
                     .into(holder.image_iv);
         }
 
-        holder.itemView.setOnClickListener(view -> listener.onClick(memos.get(position)));
     }
 
     @Override
@@ -70,11 +75,13 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
         return memos.size();
     }
 
-    public void setClickListener(OnItemClickListener listener) {this.listener = listener;}
 
-    public interface OnItemClickListener{
-        void onClick(Memo memo);
+    public interface OnItemClickListener {
+        void onItemClick(View v, int position);
+
+        void onItemLongClick(View v, int position);
     }
+
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         ImageButton imgbtn_check;
@@ -91,7 +98,31 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
             date_tv = (TextView) itemView.findViewById(R.id.date_tv);
             image_iv = (ImageView) itemView.findViewById(R.id.image_iv);
 
-        }
+            itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        if (mListener != null) {
+                            mListener.onItemClick(v, pos);
+                        }
+                    }
+                }
+            });
+            itemView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        if (mListener != null) {
+                            mListener.onItemLongClick(v, pos);
+                        }
+                    }
+                    return false;
+                }
+            });
 
+
+        }
     }
 }

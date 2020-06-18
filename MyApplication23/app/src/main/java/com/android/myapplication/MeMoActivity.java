@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -29,7 +30,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.Date;
 
-public class MeMoActivity extends AppCompatActivity {
+public class MemoActivity extends AppCompatActivity {
 
     TextView edit_toolbar_date_tv;
     Button edit_toolbar_save_btn;
@@ -40,10 +41,19 @@ public class MeMoActivity extends AppCompatActivity {
     ImageView edit_iv_picture;
     AppDatabase db;
 
+
     String imgUrl = "";
     Uri photoUri;
-    File tmpFile = null;
     String imageFilePath;
+
+    // Edit
+    String title="";
+    String content = "";
+    int id = Integer.MIN_VALUE;
+    boolean isChecked = false;
+
+    String type = "";
+
 
     // localDate.now 함수 사용하기 위한 버전 관리
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -53,22 +63,55 @@ public class MeMoActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_memo);
 
+        // 수정모드 or 작성모드
+        type = getIntent().getStringExtra("type");
+
+
+
         edit_toolbar_date_tv = (TextView) findViewById(R.id.edit_toolbar_date_tv);
 //        edit_toolbar_save_btn = (Button) findViewById(R.id.edit_toolbar_save_btn);
         edit_title_ed = (EditText) findViewById(R.id.edit_title_ed);
         edit_content_ed = (EditText) findViewById(R.id.edit_content_ed);
         edit_iv_picture = (ImageView) findViewById(R.id.edit_iv_picture);
 
+
         db = AppDatabase.getInstance(this);
 
         // 오늘 날짜
         String date = LocalDate.now().toString().replace('-', '.');
         edit_toolbar_date_tv.setText(date);
+
+
+        // 수정모드
+        if (type.equals("edit")){
+            Log.d(TAG, "onCreate: edit");
+
+            Memo memo = (Memo) getIntent().getSerializableExtra("memo");
+            edit_title_ed.setText(memo.getTitle());
+            edit_content_ed.setText(memo.getContent());
+            id = memo.getId();
+            isChecked = memo.isChecked();
+            if (TextUtils.isEmpty(memo.getImage())) {
+                Picasso.get().load(R.mipmap.ic_launcher).into(edit_iv_picture);
+            } else {
+                Picasso.get().load(memo.getImage())
+                        .centerCrop()
+                        .fit()
+                        .error(R.drawable.noavailable)
+                        .into(edit_iv_picture);
+                imgUrl = memo.getImage();
+            }
+        }
+
+
+
+
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        // 카메라 작동시
         if (requestCode == CAMERA) {
             if (TextUtils.isEmpty(photoUri.toString())) {
                 Picasso.get().load(R.mipmap.ic_launcher).into(edit_iv_picture);
@@ -81,11 +124,13 @@ public class MeMoActivity extends AppCompatActivity {
                 imgUrl = photoUri.toString();
             }
         }
+        // 갤러리 작동시
         else if ( requestCode ==GALLERY){
             photoUri = data.getData();
             if (TextUtils.isEmpty(photoUri.toString())) {
                 Picasso.get().load(R.mipmap.ic_launcher).into(edit_iv_picture);
             } else {
+
                 Picasso.get().load(photoUri.toString())
                         .centerCrop()
                         .fit()
@@ -95,12 +140,13 @@ public class MeMoActivity extends AppCompatActivity {
             }
         }
 
-
     }
+
+    // 각 버튼 클릭 메소드
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.edit_toolbar_save_btn:
-                saveMemo();
+                saveMemo(id);
                 break;
 
             case R.id.camera_btn:
@@ -109,6 +155,9 @@ public class MeMoActivity extends AppCompatActivity {
 
             case R.id.gallery_btn:
                 getPhoto();
+                break;
+            case R.id.edit_toolbar_back_btn:
+                finish();
                 break;
 
         }
@@ -159,7 +208,8 @@ public class MeMoActivity extends AppCompatActivity {
     }
 
 
-    private void saveMemo() {
+    private void saveMemo(int id) {
+            this.id = id;
         if (edit_content_ed.getText().toString().isEmpty()) {
             Toast.makeText(this, "내용을 입력하세요", Toast.LENGTH_SHORT).show();
         } else {
@@ -174,15 +224,20 @@ public class MeMoActivity extends AppCompatActivity {
                 title = edit_title_ed.getText().toString();
             }
             content = edit_content_ed.getText().toString();
-            new InsertAsyncTask(db.memoDao()).execute(new Memo(title, content, imgUrl, date, false));
+
+            if (id == Integer.MIN_VALUE){
+            new InsertAsyncTask(db.memoDao()).execute(new Memo(0,title, content, imgUrl, date, false));
+            }
+            else{
+                new InsertAsyncTask(db.memoDao()).execute(new Memo(id,title,content,imgUrl,date,isChecked));
+            }
             Toast.makeText(this, "저장되었습니다", Toast.LENGTH_SHORT).show();
             finish();
         }
 
     }
 
-
-    // Room에 메모 저장
+    // Room에 메모 백그라운드 저장
     public static class InsertAsyncTask extends AsyncTask<Memo, Void, Void> {
         private MemoDao memoDao;
 
@@ -200,4 +255,5 @@ public class MeMoActivity extends AppCompatActivity {
     private static final String TAG = "MeMoActivity";
     private static final int CAMERA = 1;
     private static final int GALLERY = 2;
+
 }
