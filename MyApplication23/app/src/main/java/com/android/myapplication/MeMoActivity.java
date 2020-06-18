@@ -67,7 +67,6 @@ public class MemoActivity extends AppCompatActivity {
         type = getIntent().getStringExtra("type");
 
 
-
         edit_toolbar_date_tv = (TextView) findViewById(R.id.edit_toolbar_date_tv);
 //        edit_toolbar_save_btn = (Button) findViewById(R.id.edit_toolbar_save_btn);
         edit_title_ed = (EditText) findViewById(R.id.edit_title_ed);
@@ -102,9 +101,6 @@ public class MemoActivity extends AppCompatActivity {
                 imgUrl = memo.getImage();
             }
         }
-
-
-
 
     }
 

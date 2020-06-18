@@ -2,14 +2,12 @@ package com.android.myapplication;
 
 import android.Manifest;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,7 +19,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.TaskStackBuilder;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,11 +31,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String CHANNEL_ID = "checkedmemo";
     FloatingActionButton floating_btn;
 
     RecyclerView recyclerView;
     MemoAdapter adapter;
 
+    NotificationManager notificationManager;
     AppDatabase db;
 
     @Override
@@ -48,12 +47,13 @@ public class MainActivity extends AppCompatActivity {
 
         // 권한 체크
         int permiCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        if (permiCheck == PackageManager.PERMISSION_DENIED){
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+        if (permiCheck == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
         }
 
-        showCustomLayoutNotification();
 
+        notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        createNotificationChannel();
         db = AppDatabase.getInstance(this);
 
         floating_btn = (FloatingActionButton) findViewById(R.id.floating_btn);
@@ -65,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         floating_btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 Intent intent = new Intent(getApplicationContext(), MemoActivity.class);
                 intent.putExtra("type", "new");
                 startActivity(intent);
@@ -93,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
                         startActivity(intent);
 
                     }
+
                     // 롱클릭 시 삭제
                     @Override
                     public void onItemLongClick(View v, int position) {
@@ -113,11 +115,54 @@ public class MainActivity extends AppCompatActivity {
                         AlertDialog alertDialog = builder.create();
                         alertDialog.show();
                     }
+
+                    @Override
+                    public void onCheckClick(View v, int position) {
+                        new UpdateAsyncTask(db.memoDao()).execute(memos.get(position));
+                        adapter.notifyDataSetChanged();
+                        /*if (!memos.get(position).isChecked()){
+                            showCustomLayoutNotification(memos.get(position));}
+                        else {
+                            notificationManager.cancelAll();
+                        }*/
+                    }
                 });
             }
         });
 
     }
+
+    public class UpdateAsyncTask extends AsyncTask<Memo, Void, Void> {
+        private MemoDao memoDao;
+        private Memo memo;
+
+        public UpdateAsyncTask(MemoDao memoDao) {
+            this.memoDao = memoDao;
+        }
+
+        @Override
+        protected Void doInBackground(Memo... memos) {
+            memo = memos[0];
+            if (memo.isChecked()) {
+                memo.setChecked(false);
+            } else {
+                memo.setChecked(true);
+            }
+            memoDao.insertMemo(memo);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            if (memo.isChecked())
+                showCustomLayoutNotification(memo);
+            else
+                notificationManager.cancelAll();
+
+        }
+    }
+
     public static class DeleteAsyncTask extends AsyncTask<Memo, Void, Void> {
         private MemoDao memoDao;
 
@@ -133,62 +178,59 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void showCustomLayoutNotification(){
+    public void showCustomLayoutNotification(Memo memo) {
         Log.d(TAG, "showCustomLayoutNotification: ");
-        NotificationCompat.Builder mBuilder = createNotification();
+
+        RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.activity_memo_notify);
+        contentView.setImageViewResource(R.id.image, R.mipmap.ic_launcher);
+        contentView.setTextViewText(R.id.title, "Custom notification");
+        contentView.setTextViewText(R.id.text, "This is a custom layout");
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.checked_star)
+                .setContentTitle(memo.getTitle())
+                .setContentText(memo.getContent())
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        Notification notification = builder.build();
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+        notification.defaults |= Notification.DEFAULT_SOUND;
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
+
+        notificationManager.notify(1, notification);
+
+
+
+
+        /*NotificationCompat.Builder mBuilder = createNotification();
 
         //커스텀 화면 만들기
         RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.activity_memo_notify);
         remoteViews.setImageViewResource(R.mipmap.ic_launcher, R.mipmap.ic_launcher);
-        remoteViews.setTextViewText(R.id.title, "Title");
-        remoteViews.setTextViewText(R.id.message, "message");
 
         //노티피케이션에 커스텀 뷰 장착
         mBuilder.setContent(remoteViews);
         mBuilder.setContentIntent(createPendingIntent());
 
         NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(1, mBuilder.build());
+        mNotificationManager.notify(1, mBuilder.build());*/
 
     }
-    /**
-     * 노티피케이션을 누르면 실행되는 기능을 가져오는 노티피케이션
-     *
-     * 실제 기능을 추가하는 것
-     * @return
-     */
-    private PendingIntent createPendingIntent(){
-        Intent resultIntent = new Intent(this, MainActivity.class);
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addParentStack(MainActivity.class);
-        stackBuilder.addNextIntent(resultIntent);
-        return stackBuilder.getPendingIntent(
-                0,
-                PendingIntent.FLAG_UPDATE_CURRENT
-        );
-    }
 
-    /**
-     * 노티피케이션 빌드
-     * @return
-     */
-    private NotificationCompat.Builder createNotification(){
-        Bitmap icon = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setLargeIcon(icon)
-                .setContentTitle("StatusBar Title")
-                .setContentText("StatusBar subTitle")
-                .setSmallIcon(R.mipmap.ic_launcher/*스와이프 전 아이콘*/)
-                .setAutoCancel(true)
-                .setWhen(System.currentTimeMillis())
-                .setDefaults(Notification.DEFAULT_ALL);
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
-            builder.setCategory(Notification.CATEGORY_MESSAGE)
-                    .setPriority(Notification.PRIORITY_HIGH)
-                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
         }
-        return builder;
     }
 
     private static final String TAG = "MainActivity";

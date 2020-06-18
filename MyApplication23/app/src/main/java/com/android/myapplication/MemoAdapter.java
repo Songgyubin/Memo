@@ -80,6 +80,8 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
         void onItemClick(View v, int position);
 
         void onItemLongClick(View v, int position);
+
+        void onCheckClick(View v, int position);
     }
 
 
@@ -119,6 +121,23 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
                         }
                     }
                     return false;
+                }
+            });
+            imgbtn_check.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int pos = getAdapterPosition();
+                    if (pos != RecyclerView.NO_POSITION) {
+                        if (mListener != null) {
+                            mListener.onCheckClick(v, pos);
+                            if (memos.get(pos).isChecked()){
+                                imgbtn_check.setImageResource(R.drawable.unchecked_star);
+                            }else{
+                                imgbtn_check.setImageResource(R.drawable.checked_star);
+                            }
+
+                        }
+                    }
                 }
             });
 
