@@ -17,9 +17,11 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 
 public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
-    private ArrayList<Memo> memos;
+    private ArrayList<Memo> memos = new ArrayList<>();
 
-    MemoAdapter(ArrayList<Memo> memos){
+    private OnItemClickListener listener;
+
+    MemoAdapter(ArrayList<Memo> memos) {
         this.memos = memos;
     }
 
@@ -37,19 +39,19 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            Memo item = memos.get(position);
+    public void onBindViewHolder(@NonNull MemoAdapter.ViewHolder holder, int position) {
+        Memo item = memos.get(position);
 
-            holder.title_tv.setText(item.getTitle());
-            holder.content_tv.setText(item.getContent());
-            holder.date_tv.setText(item.getDate());
+        holder.title_tv.setText(item.getTitle());
+        holder.content_tv.setText(item.getContent());
+        holder.date_tv.setText(item.getDate());
 
-            if (item.isChecked())
-                holder.imgbtn_check.setImageResource(R.drawable.checked_star);
-            else
-                holder.imgbtn_check.setImageResource(R.drawable.unchecked_star);
+        if (item.isChecked())
+            holder.imgbtn_check.setImageResource(R.drawable.checked_star);
+        else
+            holder.imgbtn_check.setImageResource(R.drawable.unchecked_star);
 
-            // Picasso 라이브러리
+        // Picasso 라이브러리
         if (TextUtils.isEmpty(item.getImage())) {
             Picasso.get().load(R.mipmap.ic_launcher).into(holder.image_iv);
         } else {
@@ -59,6 +61,8 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
                     .error(R.drawable.noavailable)
                     .into(holder.image_iv);
         }
+
+        holder.itemView.setOnClickListener(view -> listener.onClick(memos.get(position)));
     }
 
     @Override
@@ -66,6 +70,11 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
         return memos.size();
     }
 
+    public void setClickListener(OnItemClickListener listener) {this.listener = listener;}
+
+    public interface OnItemClickListener{
+        void onClick(Memo memo);
+    }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         ImageButton imgbtn_check;
@@ -76,12 +85,13 @@ public class MemoAdapter extends RecyclerView.Adapter<MemoAdapter.ViewHolder> {
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-
             imgbtn_check = (ImageButton) itemView.findViewById(R.id.imgbtn_check);
             title_tv = (TextView) itemView.findViewById(R.id.title_tv);
             content_tv = (TextView) itemView.findViewById(R.id.content_tv);
             date_tv = (TextView) itemView.findViewById(R.id.date_tv);
             image_iv = (ImageView) itemView.findViewById(R.id.image_iv);
+
         }
+
     }
 }

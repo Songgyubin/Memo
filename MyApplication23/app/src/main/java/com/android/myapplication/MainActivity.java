@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
@@ -15,13 +16,12 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MemoAdapter.OnItemClickListener {
 
     FloatingActionButton floating_btn;
 
     RecyclerView recyclerView;
     MemoAdapter adapter;
-
 
     AppDatabase db;
 
@@ -44,40 +44,35 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
+/*
+        ArrayList<Memo> tmpMemos = new ArrayList<>();
+        tmpMemos.add(new Memo("SampleTitle", "SampleContent", "", "20200202", false));
+        adapter = new MemoAdapter(tmpMemos);*/
 
         // fun showMemos
-        showMemos();
-
-        // 저장된 메모가 없을 때 Sample 데이터 적용
-        /*if (memos.isEmpty()) {
-            memos.add(new Memo("SampleTitle", "SampleContent", "", "20200202", false));
-            adapter = new MemoAdapter(memos);
-            recyclerView.setAdapter(adapter);
-        } else {
-            adapter = new MemoAdapter(memos);
-        }
-        recyclerView.setAdapter(adapter);*/
-    }
-
-    private void showMemos() {
-        Log.d(TAG, "showMemos: ");
         db.memoDao().getAllMemos().observe(this, new Observer<List<Memo>>() {
             @Override
             public void onChanged(List<Memo> memos) {
-                if (memos.isEmpty()) {
-                    ArrayList<Memo> tmpMemos = new ArrayList<>();
-                    tmpMemos.add(new Memo("SampleTitle", "SampleContent", "", "20200202", false));
-                    adapter = new MemoAdapter(tmpMemos);
-                } else {
-                    adapter = new MemoAdapter((ArrayList<Memo>) memos);
-                }
+                adapter = new MemoAdapter((ArrayList<Memo>) memos);
                 adapter.notifyDataSetChanged();
                 recyclerView.setAdapter(adapter);
-
             }
         });
+
+//        adapter.setClickListener(this);
+    }
+
+    // RoomDB example
+    // https://codelabs.developers.google.com/codelabs/android-room-with-a-view/#4
+    private void showMemos() {
+        Log.d(TAG, "showMemos: ");
+
     }
 
     private static final String TAG = "MainActivity";
+
+    @Override
+    public void onClick(Memo memo) {
+        Toast.makeText(this, "" + memo.getTitle(), Toast.LENGTH_SHORT).show();
+    }
 }
